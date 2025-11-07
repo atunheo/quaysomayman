@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vòng Quay May Mắn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  // Firebase config (Dùng lại cấu hình cũ của bạn)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDlmEijTxjRNzpkwcoXXUuvgRyBh88_uvg",
+    authDomain: "quay-so-may-man.firebaseapp.com",
+    projectId: "quay-so-may-man",
+    storageBucket: "quay-so-may-man.firebasestorage.app",
+    messagingSenderId: "543646085007",
+    appId: "1:543646085007:web:855c985b1451e37342e5fa",
+    measurementId: "G-RRSYPDNSWX"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .wheel-pointer {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #ef4444; 
+            position: absolute;
+            top: -15px; 
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.25));
+        }
+        #spinButton {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.25rem;
+            color: white;
+            background: linear-gradient(145deg, #f87171, #dc2626);
+            border: 4px solid white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+        #spinButton:hover:not(:disabled) {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+        }
+        #spinButton:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        #wheelCanvas { transition: transform 5s cubic-bezier(0.23, 1, 0.32, 1); }
+        .auth-bar { position: fixed; top: 16px; right: 16px; z-index: 60; }
+        .modal { transition: opacity 0.25s ease; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+
+<div class="auth-bar">
+  <div id="userArea" class="bg-gray-800 text-white rounded-lg p-2 shadow flex items-center gap-2">
+    <span id="userDisplay" class="text-sm">Đang tải...</span>
+    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded hidden">Đăng xuất</button>
+  </div>
+</div>
+<div class="container mx-auto max-w-4xl text-center">
+        
+    <h1 class="text-4xl font-bold mb-6 text-yellow-300">Vòng Quay May Mắn</h1>
+
+    <div class="flex justify-center gap-4 mb-6 flex-wrap">
+        <button id="showInputModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            Nhập/Sửa Phần Thưởng
+        </button>
+        <button id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            Xuất Excel Kết Quả
+        </button>
+        <button id="showResetHistoryModalBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            Reset Lịch Sử Quay
+        </button>
+        <button id="showFullResetModalBtn" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            Reset Toàn Bộ
+        </button>
+    </div>
+
+    <div class="relative w-full max-w-lg mx-auto aspect-square mb-6">
+        <div class="wheel-pointer"></div>
+        <canvas id="wheelCanvas" width="500" height="500" class="w-full h-full"></canvas>
+        <button id="spinButton">QUAY</button>
+    </div>
+
+    <div id="prizeDisplay"></div>
+    <div id="saveStatus" class="mt-2 text-sm text-green-400 font-semibold"></div>
+    <div class="h-10 text-2xl font-bold text-yellow-400"></div>
+
+</div>
+
+<div id="inputModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+    <div class="modal-content bg-gray-800 text-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 transform scale-95">
+        <h2 class="text-2xl font-bold mb-4">Quản lý Phần Thưởng</h2>
+        
+        <form id="addPrizeForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <input type="text" id="prizeName" placeholder="Tên phần thưởng" class="bg-gray-700 p-2 rounded col-span-1" required>
+            <input type="number" id="prizeQuantity" placeholder="Số lượng" min="0" class="bg-gray-700 p-2 rounded col-span-1" required>
+            <input type="number" id="prizeWeight" placeholder="Tỷ lệ (Trọng số)" min="1" class="bg-gray-700 p-2 rounded col-span-1" required>
+            <input type="color" id="prizeColor" title="Chọn màu" class="bg-gray-700 p-1 rounded h-10 w-full col-span-1" value="#3b82f6">
+            <button type="submit" class="md:col-span-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                Thêm Phần Thưởng
+            </button>
+        </form>
+
+        <div class="max-h-60 overflow-y-auto mb-4">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-gray-700">
+                        <th class="p-2">Màu</th>
+                        <th class="p-2">Tên</th>
+                        <th class="p-2">SL Gốc</th>
+                        <th class="p-2">SL Hiện Tại</th>
+                        <th class="p-2">Tỷ Lệ</th>
+                        <th class="p-2">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody id="prizeTableBody"></tbody>
+            </table>
+        </div>
+
+        <button id="closeInputModalBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg w-full">
+            Đóng
+        </button>
+    </div>
+</div>
+
+<div id="fullResetModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+    <div class="modal-content bg-gray-800 text-white rounded-lg shadow-xl w-full max-w-md p-6 text-center transform scale-95">
+        <h2 class="text-2xl font-bold mb-4 text-red-500">Xác nhận Reset Toàn Bộ</h2>
+        <p class="mb-4">Hành động này sẽ xóa toàn bộ dữ liệu phần thưởng và lịch sử quay. KHÔNG THỂ khôi phục.</p>
+        <p class="mb-4">Vui lòng gõ <strong class="text-red-400">OK</strong> vào ô bên dưới để xác nhận.</p>
+        <input type="text" id="fullResetConfirmInput" placeholder="Gõ 'OK' ở đây" class="bg-gray-700 p-2 rounded w-full mb-4 text-center">
+        
+        <div class="flex justify-center gap-4">
+            <button id="confirmFullResetBtn" class="bg-red-700 text-white font-bold py-2 px-6 rounded-lg opacity-50 cursor-not-allowed" disabled>
+                Xác nhận Xóa
+            </button>
+            <button id="cancelFullResetBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">
+                Hủy
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="resetHistoryModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+    <div class="modal-content bg-gray-800 text-white rounded-lg shadow-xl w-full max-w-md p-6 text-center transform scale-95">
+        <h2 class="text-2xl font-bold mb-4 text-yellow-500">Reset Lịch Sử Quay?</h2>
+        <p class="mb-6">Hành động này sẽ xóa toàn bộ lịch sử quay và khôi phục lại số lượng phần thưởng về ban đầu. Tiếp tục?</p>
+        <div class="flex justify-center gap-4">
+            <button id="confirmResetHistoryBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-6 rounded-lg">
+                Xác nhận
+            </button>
+            <button id="cancelResetHistoryBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">
+                Hủy
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="winModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+    <div class="modal-content bg-gray-800 text-white rounded-lg shadow-xl w-full max-w-md p-6 text-center transform scale-95">
+        <h2 class="text-3xl font-bold mb-4 text-yellow-300">Chúc Mừng!</h2>
+        <p class="mb-6 text-xl">Bạn đã trúng:</p>
+        <p id="winPrizeName" class="text-2xl font-bold mb-8 text-white"></p>
+        <button id="winModalOK" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-lg w-full">
+            OK
+        </button>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // ===== Biến & Hàm Vòng Quay (GIỮ NGUYÊN) =====
+        let prizes = [];
+        let winHistory = [];
+        let isSpinning = false;
+        let currentRotation = 0; 
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasSize = canvas.width;
+        const center = canvasSize / 2;
+        const radius = canvasSize / 2 - 10; 
+
+        // DOM Elements
+        const spinButton = document.getElementById('spinButton');
+        const prizeDisplay = document.getElementById('prizeDisplay');
+
+        // Modals
+        const inputModal = document.getElementById('inputModal');
+        const winModal = document.getElementById('winModal');
+        const fullResetModal = document.getElementById('fullResetModal');
+        const resetHistoryModal = document.getElementById('resetHistoryModal');
+
+        // Nút điều khiển Modal
+        const showInputModalBtn = document.getElementById('showInputModalBtn');
+        const closeInputModalBtn = document.getElementById('closeInputModalBtn');
+        const winModalOK = document.getElementById('winModalOK');
+        const showFullResetModalBtn = document.getElementById('showFullResetModalBtn');
+        const cancelFullResetBtn = document.getElementById('cancelFullResetBtn');
+        const confirmFullResetBtn = document.getElementById('confirmFullResetBtn');
+        const fullResetConfirmInput = document.getElementById('fullResetConfirmInput');
+        const showResetHistoryModalBtn = document.getElementById('showResetHistoryModalBtn');
+        const confirmResetHistoryBtn = document.getElementById('confirmResetHistoryBtn');
+        const cancelResetHistoryBtn = document.getElementById('cancelResetHistoryBtn');
+
+        // Form
+        const addPrizeForm = document.getElementById('addPrizeForm');
+        const prizeTableBody = document.getElementById('prizeTableBody');
+
+        // Nút chức năng
+        const exportBtn = document.getElementById('exportBtn');
+
+        // Khởi tạo
+        loadData();
+        drawWheel();
+
+        // Event Listeners (GIỮ NGUYÊN)
+        spinButton.addEventListener('click', spin);
+        exportBtn.addEventListener('click', exportToExcel);
+        showInputModalBtn.addEventListener('click', () => {
+            updatePrizeTable();
+            inputModal.classList.remove('hidden');
+            inputModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100');
+        });
+        closeInputModalBtn.addEventListener('click', () => {
+            inputModal.classList.add('hidden');
+            inputModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
+            drawWheel(); 
+        });
+        addPrizeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('prizeName').value;
+            const quantity = parseInt(document.getElementById('prizeQuantity').value);
+            const weight = parseInt(document.getElementById('prizeWeight').value);
+            const color = document.getElementById('prizeColor').value;
+
+            if (name && quantity >= 0 && weight >= 1) {
+                prizes.push({ name, originalQuantity: quantity, quantity: quantity, weight, color });
+                saveData();
+                updatePrizeTable();
+                addPrizeForm.reset();
+                document.getElementById('prizeColor').value = getRandomColor();
+            }
+        });
+        winModalOK.addEventListener('click', () => {
+            winModal.classList.add('hidden');
+            winModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
+        });
+        showFullResetModalBtn.addEventListener('click', () => {
+            fullResetModal.classList.remove('hidden');
+            fullResetModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100');
+        });
+        cancelFullResetBtn.addEventListener('click', () => {
+            fullResetModal.classList.add('hidden');
+            fullResetModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
+            fullResetConfirmInput.value = '';
+            confirmFullResetBtn.disabled = true;
+            confirmFullResetBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+        fullResetConfirmInput.addEventListener('input', () => {
+            if (fullResetConfirmInput.value === 'OK') {
+                confirmFullResetBtn.disabled = false;
+                confirmFullResetBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                confirmFullResetBtn.disabled = true;
+                confirmFullResetBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        });
+        confirmFullResetBtn.addEventListener('click', () => {
+            if (fullResetConfirmInput.value === 'OK') {
+                prizes = [];
+                winHistory = [];
+                saveData();
+                drawWheel();
+                prizeDisplay.textContent = '';
+                cancelFullResetBtn.click(); 
+            }
+        });
+        showResetHistoryModalBtn.addEventListener('click', () => {
+            resetHistoryModal.classList.remove('hidden');
+            resetHistoryModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100');
+        });
+        cancelResetHistoryBtn.addEventListener('click', () => {
+            resetHistoryModal.classList.add('hidden');
+            resetHistoryModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
+        });
+        confirmResetHistoryBtn.addEventListener('click', () => {
+            winHistory = [];
+            prizes.forEach(p => { p.quantity = p.originalQuantity; });
+            saveData();
+            drawWheel();
+            prizeDisplay.textContent = 'Đã reset lịch sử quay.';
+            resetHistoryModal.classList.add('hidden');
+            resetHistoryModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
+        });
+
+
+        // Hàm Chức Năng (GIỮ NGUYÊN)
+        function drawWheel() { 
+            const availablePrizes = prizes.filter(p => p.quantity > 0);
+            if (availablePrizes.length === 0) {
+                // ... logic vẽ hết phần thưởng
+                spinButton.disabled = true;
+                return;
+            }
+            spinButton.disabled = false;
+            const arc = (2 * Math.PI) / availablePrizes.length;
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+            
+            availablePrizes.forEach((prize, i) => {
+                const startAngle = i * arc;
+                const endAngle = (i + 1) * arc;
+                
+                // Vẽ lát cắt
+                ctx.beginPath();
+                ctx.fillStyle = prize.color;
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fill();
+
+                // Vẽ viền
+                ctx.strokeStyle = '#f9fafb';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Vẽ chữ
+                ctx.save();
+                ctx.fillStyle = getContrastingTextColor(prize.color);
+                ctx.font = '16px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const angle = startAngle + arc / 2;
+                ctx.translate(center, center);
+                ctx.rotate(angle);
+                const prizeNameShort = prize.name.length > 15 ? prize.name.substring(0, 15) + '...' : prize.name;
+                ctx.fillText(prizeNameShort, radius * 0.65, 0);
+                ctx.font = '14px Inter';
+                ctx.fillText(`(SL: ${prize.quantity})`, radius * 0.65, 20);
+                ctx.restore();
+            });
+
+            // Vẽ vòng tròn trung tâm
+            ctx.beginPath();
+            ctx.fillStyle = '#4b5563';
+            ctx.arc(center, center, 55, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        
+        function spin() {
+            if (isSpinning) return;
+            
+            const availablePrizes = prizes.filter(p => p.quantity > 0);
+            if (availablePrizes.length === 0) {
+                prizeDisplay.textContent = "Đã hết phần thưởng!";
+                return;
+            }
+
+            isSpinning = true;
+            spinButton.disabled = true;
+            prizeDisplay.textContent = "Đang quay...";
+
+            const weightedArray = [];
+            availablePrizes.forEach((prize, index) => {
+                for (let i = 0; i < prize.weight; i++) {
+                    weightedArray.push(index);
+                }
+            });
+
+            const winningIndex = weightedArray[Math.floor(Math.random() * weightedArray.length)];
+            const arc = (2 * Math.PI) / availablePrizes.length;
+            const targetSliceAngle = winningIndex * arc;
+            const randomOffset = (Math.random() * 0.8 + 0.1) * arc;
+            const targetAngle = targetSliceAngle + randomOffset; 
+            const POINTER_ANGLE = 3 * Math.PI / 2;
+            const targetFinalAngle = POINTER_ANGLE - targetAngle;
+
+            let normalizedCurrent = currentRotation % (2 * Math.PI);
+            if (normalizedCurrent < 0) normalizedCurrent += 2 * Math.PI;
+
+            let rotationDifference = targetFinalAngle - normalizedCurrent;
+            if (rotationDifference < 0) {
+                rotationDifference += 2 * Math.PI;
+            }
+
+            const totalSpins = 10 * 2 * Math.PI;
+            const newRotation = currentRotation + totalSpins + rotationDifference;
+
+            canvas.style.transition = 'transform 5s cubic-bezier(0.23, 1, 0.32, 1)';
+            canvas.style.transform = `rotate(${newRotation}rad)`;
+            currentRotation = newRotation;
+
+            setTimeout(() => {
+                isSpinning = false;
+                spinButton.disabled = false;
+                
+                const winningPrize = availablePrizes[winningIndex];
+                winningPrize.quantity--;
+                
+                const timestamp = new Date().toLocaleString('vi-VN');
+                
+                // === VỊ TRÍ THAY THẾ URL APPS SCRIPT ===
+                const scriptURL = "https://script.google.com/macros/s/AKfycbz8JmErmhXBaUbdjneubGT_D2UCqZIl1JCLtD0vpSfoF60J1nfd2Dn6ACjUO41ISZat/exec"; 
+                const user = window.currentUser || {};
+                const username = user.username || "(chưa đăng nhập)";
+                const fullname = user.fullname || "(chưa có họ tên)";
+                const payload = {
+                    time: timestamp,
+                    prize: winningPrize.name,
+                    username, 
+                    fullname 
+                };
+                fetch(scriptURL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload)
+                }).then(()=>{
+                    const saveStatus = document.getElementById('saveStatus');
+                    if(saveStatus){
+                        saveStatus.textContent = "✅ Đã lưu lên Google Sheet thành công!";
+                        saveStatus.classList.remove("text-red-400");
+                        saveStatus.classList.add("text-green-400");
+                        setTimeout(()=>saveStatus.textContent="",3000);
+                    }
+                }).catch(()=>{
+                    const saveStatus = document.getElementById('saveStatus');
+                    if(saveStatus){
+                        saveStatus.textContent = "⚠️ Lỗi khi gửi dữ liệu lên Google Sheet! (Kiểm tra lại URL và Apps Script Logs)";
+                        saveStatus.classList.remove("text-green-400");
+                        saveStatus.classList.add("text-red-400");
+                        setTimeout(()=>saveStatus.textContent="",5000); 
+                    }
+                });
+
+                winHistory.push({ time: timestamp, prize: winningPrize.name }); 
+                saveData();
+                
+                currentRotation = currentRotation % (2 * Math.PI); 
+                canvas.style.transition = 'none';
+                canvas.style.transform = `rotate(${currentRotation}rad)`;
+                
+                drawWheel(); 
+                
+                prizeDisplay.textContent = `Trúng: ${winningPrize.name}!`;
+                document.getElementById('winPrizeName').textContent = winningPrize.name;
+                winModal.classList.remove('hidden');
+                winModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100');
+
+            }, 5100);
+        }
+
+        function updatePrizeTable() { /* ... (Logic update table cũ) ... */ 
+            prizeTableBody.innerHTML = '';
+            prizes.forEach((prize, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-700';
+                row.innerHTML = `
+                    <td class="p-2"><div class="w-6 h-6 rounded" style="background-color: ${prize.color}"></div></td>
+                    <td class="p-2">${prize.name}</td>
+                    <td class="p-2">${prize.originalQuantity}</td>
+                    <td class="p-2">${prize.quantity}</td>
+                    <td class="p-2">${prize.weight}</td>
+                    <td class="p-2">
+                        <button class="delete-prize-btn text-red-500 hover:text-red-700" data-index="${index}">Xóa</button>
+                    </td>
+                `;
+                prizeTableBody.appendChild(row);
+            });
+
+            document.querySelectorAll('.delete-prize-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    prizes.splice(index, 1);
+                    saveData();
+                    updatePrizeTable();
+                });
+            });
+        }
+        function exportToExcel() { /* ... (Logic export cũ) ... */ 
+            if (winHistory.length === 0) {
+                alert("Chưa có lịch sử quay thưởng để xuất.");
+                return;
+            }
+            const data = [["Thời gian", "Phần thưởng"], ...winHistory.map(item => [item.time, item.prize])];
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "LichSuQuayThuong");
+            XLSX.writeFile(wb, "lich_su_quay_thuong.xlsx");
+        }
+        function saveData() { /* ... (Logic save data cũ) ... */ 
+            localStorage.setItem('luckyWheelPrizes', JSON.stringify(prizes));
+            localStorage.setItem('luckyWheelHistory', JSON.stringify(winHistory));
+        }
+        function loadData() { /* ... (Logic load data cũ) ... */ 
+            const savedPrizes = localStorage.getItem('luckyWheelPrizes');
+            const savedHistory = localStorage.getItem('luckyWheelHistory');
+            if (savedPrizes) {
+                prizes = JSON.parse(savedPrizes);
+                prizes.forEach(p => {
+                    if (p.originalQuantity === undefined) {
+                        p.originalQuantity = p.quantity;
+                    }
+                });
+            }
+            if (savedHistory) {
+                winHistory = JSON.parse(savedHistory);
+            }
+        }
+        function getRandomColor() { /* ... (Logic random color cũ) ... */ 
+            return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+        }
+        function getContrastingTextColor(hexcolor) { /* ... (Logic contrast color cũ) ... */ 
+            hexcolor = hexcolor.replace("#", "");
+            const r = parseInt(hexcolor.substr(0, 2), 16);
+            const g = parseInt(hexcolor.substr(2, 2), 16);
+            const b = parseInt(hexcolor.substr(4, 2), 16);
+            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? '#000000' : '#FFFFFF';
+        }
+
+        // Hàm hỗ trợ ẩn/hiện đơn giản cho nút Đăng xuất
+        function show(el){ el.classList.remove('hidden'); }
+        function hide(el){ el.classList.add('hidden'); }
+    });
+</script>
+
+
+<script>
+// 🌟 KHỐI LOGIC XỬ LÝ ĐĂNG NHẬP/HIỂN THỊ TÊN 🌟
+const userDisplay = document.getElementById('userDisplay');
+const logoutBtn = document.getElementById('logoutBtn');
+
+// Đăng xuất
+logoutBtn.addEventListener('click', async ()=> {
+  await auth.signOut();
+});
+
+// Kiểm tra trạng thái đăng nhập
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    // 1. Đã đăng nhập: Tải thông tin và hiển thị
+    let fullname = "";
+    try {
+      const doc = await db.collection("users").doc(user.uid).get();
+      if (doc.exists) {
+        fullname = doc.data().fullname || "";
+      }
+    } catch (e) {
+      console.warn("Lỗi Firestore:", e);
+    }
+
+    // Lưu thông tin để gửi Google Sheet
+    window.currentUser = {
+      username: user.email,
+      fullname: fullname || "(chưa có họ tên)"
+    };
+
+    // Cập nhật giao diện: Hiển thị tên và email
+    userDisplay.textContent = fullname
+      ? `${fullname} (${user.email})`
+      : user.email;
+    logoutBtn.classList.remove('hidden'); // Hiển thị nút Đăng xuất
+    
+  } else {
+    // 2. Chưa đăng nhập: CHUYỂN HƯỚNG VỀ TRANG ĐĂNG NHẬP
+    window.location.href = 'index.html'; 
+  }
+});
+</script>
+
+</body>
+</html>
