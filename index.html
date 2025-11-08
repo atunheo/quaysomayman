@@ -75,7 +75,7 @@
       if (!fullname || !username || !password) return alert("Vui lòng nhập đầy đủ thông tin.");
 
       // Email ảo HỢP LỆ (ẩn khỏi người dùng)
-      const fakeEmail = `${username}@example.com`;
+      const fakeEmail = `${username}@gmail.com`;
 
       const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
       if (error) return alert("Lỗi đăng ký: " + error.message);
