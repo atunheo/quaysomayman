@@ -75,7 +75,7 @@
       if (!fullname || !username || !password) return alert("Vui lòng nhập đầy đủ thông tin.");
 
       // Email ẩn hợp lệ để Supabase hoạt động
-      const fakeEmail = `${username}@user.localhost.com`;
+      const fakeEmail = `${username}@example.com`;
 
       const { data, error } = await supabase.auth.signUp({
         email: fakeEmail,
