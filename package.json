@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "description": "Static site with Netlify plugin for environment variables.",
   "dependencies": {
-    "netlify-plugin-inline-variables": "^1.0.0"
+    "netlify-plugin-inline-env": "^1.0.0" 
   }
 }
