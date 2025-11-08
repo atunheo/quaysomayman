@@ -573,7 +573,18 @@ async function checkUser() {
     : user.email;
 
   logoutBtn.classList.remove('hidden');
+      const lastUser = localStorage.getItem("currentUser");
+
+  if (lastUser !== username) {
+    // Nếu user khác → reset vòng quay hoàn toàn
+    localStorage.clear();
+    localStorage.setItem("currentUser", username);
+  }
+
+  // Lưu user hiện tại để dùng sau này
+  window.currentUser = { username };
 }
+
 
 // Đăng xuất
 logoutBtn.addEventListener('click', async () => {
