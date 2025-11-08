@@ -10,8 +10,8 @@ redirects = []
 publish = "/opt/build/repo"
 publishOrigin = "config"
 commandOrigin = "config"
-# Lệnh Build MỚI: Thay thế placeholder trong cả index.html và auth.html, sau đó chạy build
-command = "sed -i 's|FIREBASE_API_KEY_PLACEHOLDER|'$FIREBASE_API_KEY'|g' index.html index1.html && netlify build"
+# LỆNH ĐÚNG: CHỈ DÙNG sed -i, BỎ && netlify build
+command = "sed -i '' 's|FIREBASE_API_KEY_PLACEHOLDER|'$FIREBASE_API_KEY'|g' index.html index1.html"
 
   [build.environment]
 
