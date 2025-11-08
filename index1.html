@@ -6,27 +6,16 @@
     <title>Vòng Quay May Mắn</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script>
-  // Firebase config (SỬ DỤNG PLACEHOLDER AN TOÀN)
-  const firebaseConfig = {
-  // Vercel sẽ thay thế %FIREBASE_API_KEY% bằng giá trị bí mật của bạn
-  apiKey: "%FIREBASE_API_KEY%", 
-  authDomain: "quay-so-may-man.firebaseapp.com",
-  projectId: "quay-so-may-man",
-  storageBucket: "quay-so-may-man.firebasestorage.app",
-  messagingSenderId: "543646085007",
-  appId: "1:543646085007:web:855c985b1451e37342e5fa",
-  measurementId: "G-RRSYPDNSWX"
-};
-  // Initialize Firebase (compat)
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+<script>
+  // --- Supabase config ---
+  const SUPABASE_URL = "https://qjxkibwlqblabcquegut.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqeGtpYndscWJsYWJjcXVlZ3V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1ODI2MDksImV4cCI6MjA3ODE1ODYwOX0.Y8M3yq0X98tMDiA6UBP0G4qDoqsqx0ozheaAf-rbMGs"; // ⚠️ Dán Public Anon Key của bạn vào đây
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -555,45 +544,46 @@
 
 <script>
 // 🌟 KHỐI LOGIC XỬ LÝ ĐĂNG NHẬP/HIỂN THỊ TÊN 🌟
+// 🌟 KHỐI LOGIC XỬ LÝ ĐĂNG NHẬP/HIỂN THỊ TÊN (SUPABASE) 🌟
 const userDisplay = document.getElementById('userDisplay');
 const logoutBtn = document.getElementById('logoutBtn');
 
-// Đăng xuất
-logoutBtn.addEventListener('click', async ()=> {
-  await auth.signOut();
-});
-
-// Kiểm tra trạng thái đăng nhập
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    // 1. Đã đăng nhập: Tải thông tin và hiển thị
-    let fullname = "";
-    try {
-      const doc = await db.collection("users").doc(user.uid).get();
-      if (doc.exists) {
-        fullname = doc.data().fullname || "";
-      }
-    } catch (e) {
-      console.warn("Lỗi Firestore:", e);
-    }
-
-    // Lưu thông tin để gửi Google Sheet
-    window.currentUser = {
-      username: user.email,
-      fullname: fullname || "(chưa có họ tên)"
-    };
-
-    // Cập nhật giao diện: Hiển thị tên và email
-    userDisplay.textContent = fullname
-      ? `${fullname} (${user.email})`
-      : user.email;
-    logoutBtn.classList.remove('hidden'); // Hiển thị nút Đăng xuất
-    
-  } else {
-    // 2. Chưa đăng nhập: CHUYỂN HƯỚNG VỀ TRANG ĐĂNG NHẬP
-    window.location.href = 'index.html'; 
+async function checkUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    // Chưa đăng nhập → quay lại trang đăng nhập
+    window.location.href = 'index.html';
+    return;
   }
+
+  // Lấy fullname từ bảng profiles (nếu có)
+  let fullname = "";
+  const { data: profileData } = await supabase.from('profiles').select('fullname').eq('id', user.id).single();
+  if (profileData && profileData.fullname) fullname = profileData.fullname;
+
+  // Lưu thông tin user toàn cục để gửi lên Google Sheet
+  window.currentUser = {
+    username: user.email,
+    fullname: fullname || "(chưa có họ tên)"
+  };
+
+  // Hiển thị tên người dùng
+  userDisplay.textContent = fullname
+    ? `${fullname} (${user.email})`
+    : user.email;
+
+  logoutBtn.classList.remove('hidden');
+}
+
+// Đăng xuất
+logoutBtn.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  window.location.href = 'index.html';
 });
+
+// Kiểm tra khi tải trang
+checkUser();
+
 </script>
 
 </body>
