@@ -1,0 +1,8 @@
+{
+  "name": "firebase-lucky-wheel-app",
+  "version": "1.0.0",
+  "description": "Static site with Netlify plugin for environment variables.",
+  "dependencies": {
+    "netlify-plugin-inline-variables": "^1.0.0"
+  }
+}
