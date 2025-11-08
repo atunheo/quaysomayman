@@ -10,10 +10,11 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-<script>
-  // Firebase config (Dùng lại cấu hình cũ của bạn)
+  <script>
+  // Firebase config (SỬ DỤNG PLACEHOLDER AN TOÀN)
   const firebaseConfig = {
-    apiKey: "",
+    // 🔥 NETLIFY SẼ THAY THẾ CHUỖI NÀY BẰNG API KEY BÍ MẬT CỦA BẠN 🔥
+    apiKey: "FIREBASE_API_KEY_PLACEHOLDER", 
     authDomain: "quay-so-may-man.firebaseapp.com",
     projectId: "quay-so-may-man",
     storageBucket: "quay-so-may-man.firebasestorage.app",
@@ -21,6 +22,7 @@
     appId: "1:543646085007:web:855c985b1451e37342e5fa",
     measurementId: "G-RRSYPDNSWX"
   };
+  // Initialize Firebase (compat)
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
