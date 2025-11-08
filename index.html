@@ -1,145 +1,112 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập | Đăng Ký</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    
- <script>
-  // Firebase config (SỬ DỤNG PLACEHOLDER AN TOÀN)
-  const firebaseConfig = {
-  // Vercel sẽ thay thế %FIREBASE_API_KEY% bằng giá trị bí mật của bạn
-  apiKey: "%FIREBASE_API_KEY%", 
-  authDomain: "quay-so-may-man.firebaseapp.com",
-  projectId: "quay-so-may-man",
-  storageBucket: "quay-so-may-man.firebasestorage.app",
-  messagingSenderId: "543646085007",
-  appId: "1:543646085007:web:855c985b1451e37342e5fa",
-  measurementId: "G-RRSYPDNSWX"
-};
-  // Initialize Firebase (compat)
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng Nhập | Đăng Ký</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl">
-        <h1 class="text-3xl font-bold text-center text-yellow-400 mb-6">Chào Mừng!</h1>
+  <div class="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl">
+    <h1 class="text-3xl font-bold text-center text-yellow-400 mb-6">Chào Mừng!</h1>
 
-        <div class="flex mb-6 border-b border-gray-700">
-            <button id="showLoginTab" class="flex-1 py-2 text-lg font-semibold border-b-2 border-yellow-400 text-yellow-400 transition">
-                Đăng Nhập
-            </button>
-            <button id="showRegisterTab" class="flex-1 py-2 text-lg font-semibold text-gray-400 transition">
-                Đăng Ký
-            </button>
-        </div>
-
-        <div id="loginForm" class="auth-tab">
-            <h2 class="text-xl font-bold mb-4">Đăng Nhập</h2>
-            <input id="loginEmail" placeholder="Email" type="email" class="w-full p-3 mb-3 border border-gray-700 rounded bg-gray-700 text-white" />
-            <input id="loginPassword" placeholder="Mật khẩu" type="password" class="w-full p-3 mb-4 border border-gray-700 rounded bg-gray-700 text-white" />
-            <button id="loginSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Đăng nhập</button>
-        </div>
-
-        <div id="registerForm" class="auth-tab hidden">
-            <h2 class="text-xl font-bold mb-4">Tạo Tài Khoản</h2>
-            <input id="regFullname" placeholder="Họ và tên" class="w-full p-3 mb-3 border border-gray-700 rounded bg-gray-700 text-white" />
-            <input id="regEmail" placeholder="Email" type="email" class="w-full p-3 mb-3 border border-gray-700 rounded bg-gray-700 text-white" />
-            <input id="regPassword" placeholder="Mật khẩu" type="password" class="w-full p-3 mb-4 border border-gray-700 rounded bg-gray-700 text-white" />
-            <button id="registerSubmit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition">Đăng ký</button>
-        </div>
-
+    <div class="flex mb-6 border-b border-gray-700">
+      <button id="showLoginTab" class="flex-1 py-2 text-lg font-semibold border-b-2 border-yellow-400 text-yellow-400">Đăng Nhập</button>
+      <button id="showRegisterTab" class="flex-1 py-2 text-lg font-semibold text-gray-400">Đăng Ký</button>
     </div>
 
-    <script>
-        // DOM Elements
-        const showLoginTab = document.getElementById('showLoginTab');
-        const showRegisterTab = document.getElementById('showRegisterTab');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const loginSubmit = document.getElementById('loginSubmit');
-        const registerSubmit = document.getElementById('registerSubmit');
+    <!-- Form đăng nhập -->
+    <div id="loginForm">
+      <h2 class="text-xl font-bold mb-4">Đăng Nhập</h2>
+      <input id="loginEmail" placeholder="Email" type="email" class="w-full p-3 mb-3 border border-gray-700 rounded bg-gray-700 text-white" />
+      <input id="loginPassword" placeholder="Mật khẩu" type="password" class="w-full p-3 mb-4 border border-gray-700 rounded bg-gray-700 text-white" />
+      <button id="loginSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Đăng nhập</button>
+    </div>
 
-        // Functions
-        function switchTab(target) {
-            if (target === 'login') {
-                loginForm.classList.remove('hidden');
-                registerForm.classList.add('hidden');
-                showLoginTab.classList.add('border-yellow-400', 'text-yellow-400');
-                showLoginTab.classList.remove('text-gray-400', 'border-b-0');
-                showRegisterTab.classList.remove('border-yellow-400', 'text-yellow-400');
-                showRegisterTab.classList.add('text-gray-400', 'border-b-0');
-            } else {
-                loginForm.classList.add('hidden');
-                registerForm.classList.remove('hidden');
-                showRegisterTab.classList.add('border-yellow-400', 'text-yellow-400');
-                showRegisterTab.classList.remove('text-gray-400', 'border-b-0');
-                showLoginTab.classList.remove('border-yellow-400', 'text-yellow-400');
-                showLoginTab.classList.add('text-gray-400', 'border-b-0');
-            }
-        }
+    <!-- Form đăng ký -->
+    <div id="registerForm" class="hidden">
+      <h2 class="text-xl font-bold mb-4">Tạo Tài Khoản</h2>
+      <input id="regFullname" placeholder="Họ và tên" class="w-full p-3 mb-3 border border-gray-700 rounded bg-gray-700 text-white" />
+      <input id="regEmail" placeholder="Email" type="email" class="w-full p-3 mb-3 border border-gray-700 rounded bg-gray-700 text-white" />
+      <input id="regPassword" placeholder="Mật khẩu" type="password" class="w-full p-3 mb-4 border border-gray-700 rounded bg-gray-700 text-white" />
+      <button id="registerSubmit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition">Đăng ký</button>
+    </div>
+  </div>
 
-        // Event Listeners
-        showLoginTab.addEventListener('click', () => switchTab('login'));
-        showRegisterTab.addEventListener('click', () => switchTab('register'));
+  <script>
+    // --- Khởi tạo Supabase ---
+    const SUPABASE_URL = "https://qjxkibwlqblabcquegut.supabase.co";
+    const SUPABASE_ANON_KEY = "PASTE_YOUR_PUBLIC_ANON_KEY_HERE"; // ⚠️ Dán Public Anon Key vào đây
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Register Logic
-        registerSubmit.addEventListener('click', async () => {
-            const fullname = document.getElementById('regFullname').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value.trim();
-            if(!fullname || !email || !password){ alert('Vui lòng nhập đầy đủ'); return; }
-            
-            try {
-                const userCred = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCred.user;
-                
-                // save to firestore
-                await db.collection('users').doc(user.uid).set({
-                    fullname, email, createdAt: new Date().toISOString()
-                });
-                
-                // Chuyển hướng sau khi đăng ký thành công
-                alert('Tạo tài khoản thành công! Đang chuyển hướng...');
-                window.location.href = 'index.html'; 
-            } catch(err){ 
-                alert('Lỗi đăng ký: ' + err.message); 
-            }
-        });
+    // --- DOM ---
+    const showLoginTab = document.getElementById('showLoginTab');
+    const showRegisterTab = document.getElementById('showRegisterTab');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const loginSubmit = document.getElementById('loginSubmit');
+    const registerSubmit = document.getElementById('registerSubmit');
 
-        // Login Logic
-        loginSubmit.addEventListener('click', async () => {
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            if(!email || !password){ alert('Vui lòng nhập đầy đủ'); return; }
-            
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // Chuyển hướng sau khi đăng nhập thành công
-                alert('Đăng nhập thành công! Đang chuyển hướng...');
-                window.location.href = 'index.html'; 
-            } catch(err){ 
-                alert('Lỗi đăng nhập: ' + err.message); 
-            }
-        });
-        
-        // Kiểm tra trạng thái đăng nhập ngay khi vào trang Auth
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // Nếu đã đăng nhập, chuyển hướng ngay
-                window.location.href = 'index1.html';
-            }
-        });
-    </script>
+    // --- Chuyển tab ---
+    showLoginTab.addEventListener('click', () => {
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+      showLoginTab.classList.add('text-yellow-400', 'border-yellow-400');
+      showRegisterTab.classList.remove('text-yellow-400', 'border-yellow-400');
+    });
+    showRegisterTab.addEventListener('click', () => {
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+      showRegisterTab.classList.add('text-yellow-400', 'border-yellow-400');
+      showLoginTab.classList.remove('text-yellow-400', 'border-yellow-400');
+    });
+
+    // --- Đăng ký ---
+    registerSubmit.addEventListener('click', async () => {
+      const fullname = document.getElementById('regFullname').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value.trim();
+
+      if (!fullname || !email || !password) return alert("Vui lòng nhập đầy đủ thông tin.");
+
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) return alert("Lỗi đăng ký: " + error.message);
+
+      // Lưu thêm fullname + email vào bảng profiles
+      const user = data.user;
+      if (user) {
+        await supabase.from("profiles").insert([{ id: user.id, fullname, email }]);
+      }
+
+      alert("Tạo tài khoản thành công! Hãy kiểm tra email để xác nhận (nếu cần).");
+    });
+
+    // --- Đăng nhập ---
+    loginSubmit.addEventListener('click', async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+
+      if (!email || !password) return alert("Vui lòng nhập đầy đủ thông tin.");
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return alert("Lỗi đăng nhập: " + error.message);
+
+      alert("Đăng nhập thành công!");
+      window.location.href = "index1.html"; // chuyển hướng sau đăng nhập
+    });
+
+    // --- Kiểm tra user đang đăng nhập ---
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        window.location.href = "index1.html";
+      }
+    })();
+  </script>
 </body>
 </html>
