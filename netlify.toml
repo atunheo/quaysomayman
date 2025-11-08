@@ -11,8 +11,7 @@ publish = "/opt/build/repo"
 publishOrigin = "config"
 commandOrigin = "config"
 # LỆNH CUỐI CÙNG: Dùng ký tự phân cách '_' hiếm gặp.
-command = "sed -i '' 's_FIREBASE_API_KEY_PLACEHOLDER_'"$FIREBASE_API_KEY"'_g' index.html index1.html"
-
+command = "sed -i 's|FIREBASE_API_KEY_PLACEHOLDER|'"$FIREBASE_API_KEY"'|g' index.html index1.html"
   [build.environment]
 
   [build.processing]
