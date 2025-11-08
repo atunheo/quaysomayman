@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đăng Nhập | Đăng Ký</title>
+  <title>Đăng Nhập / Đăng Ký</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -74,13 +74,17 @@
 
       if (!fullname || !username || !password) return alert("Vui lòng nhập đầy đủ thông tin.");
 
-      // Chuyển username thành email giả
-      const fakeEmail = `${username}@fake.local`;
+      // Email ẩn hợp lệ để Supabase hoạt động
+      const fakeEmail = `${username}@user.localhost.com`;
 
-      const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
+      const { data, error } = await supabase.auth.signUp({
+        email: fakeEmail,
+        password
+      });
+
       if (error) return alert("Lỗi đăng ký: " + error.message);
 
-      // Lưu vào bảng profiles
+      // Lưu vào bảng profiles (username + fullname)
       const user = data.user;
       if (user) {
         await supabase.from("profiles").insert([{ id: user.id, fullname, username }]);
@@ -96,16 +100,19 @@
 
       if (!username || !password) return alert("Vui lòng nhập tài khoản và mật khẩu.");
 
-      const fakeEmail = `${username}@fake.local`;
+      const fakeEmail = `${username}@user.localhost.com`;
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: fakeEmail,
+        password
+      });
+
       if (error) return alert("Sai tài khoản hoặc mật khẩu.");
-
       alert("Đăng nhập thành công!");
       window.location.href = "index1.html";
     });
 
-    // --- Kiểm tra user đang đăng nhập ---
+    // --- Tự chuyển hướng nếu đã đăng nhập ---
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) window.location.href = "index1.html";
