@@ -12,22 +12,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     
-    <script>
-  // Firebase config (SỬ DỤNG PLACEHOLDER AN TOÀN)
-  const firebaseConfig = {
-    // 🔥 NETLIFY SẼ THAY THẾ CHUỖI NÀY BẰNG API KEY BÍ MẬT CỦA BẠN 🔥
-    apiKey: process.env.FIREBASE_API_KEY,
-    authDomain: "quay-so-may-man.firebaseapp.com",
-    projectId: "quay-so-may-man",
-    storageBucket: "quay-so-may-man.firebasestorage.app",
-    messagingSenderId: "543646085007",
-    appId: "1:543646085007:web:855c985b1451e37342e5fa",
-    measurementId: "G-RRSYPDNSWX"
-  };
-  // Initialize Firebase (compat)
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+ <script>
+  // Firebase config (SỬ DỤNG PLACEHOLDER AN TOÀN)
+  const firebaseConfig = {
+  // Vercel sẽ thay thế %FIREBASE_API_KEY% bằng giá trị bí mật của bạn
+  apiKey: "%FIREBASE_API_KEY%", 
+  authDomain: "quay-so-may-man.firebaseapp.com",
+  projectId: "quay-so-may-man",
+  storageBucket: "quay-so-may-man.firebasestorage.app",
+  messagingSenderId: "543646085007",
+  appId: "1:543646085007:web:855c985b1451e37342e5fa",
+  measurementId: "G-RRSYPDNSWX"
+};
+  // Initialize Firebase (compat)
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 </script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
