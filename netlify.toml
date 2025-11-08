@@ -10,8 +10,8 @@ redirects = []
 publish = "/opt/build/repo"
 publishOrigin = "config"
 commandOrigin = "config"
-# LỆNH ĐÚNG: CHỈ DÙNG sed -i, BỎ && netlify build
-command = "sed -i '' 's|FIREBASE_API_KEY_PLACEHOLDER|'$FIREBASE_API_KEY'|g' index.html index1.html"
+# LỆNH SỬA LỖI CUỐI: Dùng NHÁY KÉP "..." cho mẫu thay thế để đảm bảo biến mở rộng
+command = "sed -i '' \"s|FIREBASE_API_KEY_PLACEHOLDER|$FIREBASE_API_KEY|g\" index.html index1.html"
 
   [build.environment]
 
