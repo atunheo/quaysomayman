@@ -41,7 +41,7 @@
   <script>
     // --- Supabase config ---
     const SUPABASE_URL = "https://qjxkibwlqblabcquegut.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqeGtpYndscWJsYWJjcXVlZ3V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1ODI2MDksImV4cCI6MjA3ODE1ODYwOX0.Y8M3yq0X98tMDiA6UBP0G4qDoqsqx0ozheaAf-rbMGs"; // ⚠️ Dán key public thật của bạn
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqeGtpYndscWJsYWJjcXVlZ3V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1ODI2MDksImV4cCI6MjA3ODE1ODYwOX0.Y8M3yq0X98tMDiA6UBP0G4qDoqsqx0ozheaAf-rbMGs"; // ⚠️ Dán key thật vào đây
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // --- DOM ---
@@ -74,17 +74,13 @@
 
       if (!fullname || !username || !password) return alert("Vui lòng nhập đầy đủ thông tin.");
 
-      // Email ẩn hợp lệ để Supabase hoạt động
+      // Email ảo HỢP LỆ (ẩn khỏi người dùng)
       const fakeEmail = `${username}@example.com`;
 
-      const { data, error } = await supabase.auth.signUp({
-        email: fakeEmail,
-        password
-      });
-
+      const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
       if (error) return alert("Lỗi đăng ký: " + error.message);
 
-      // Lưu vào bảng profiles (username + fullname)
+      // Lưu thông tin vào bảng profiles
       const user = data.user;
       if (user) {
         await supabase.from("profiles").insert([{ id: user.id, fullname, username }]);
@@ -100,19 +96,16 @@
 
       if (!username || !password) return alert("Vui lòng nhập tài khoản và mật khẩu.");
 
-      const fakeEmail = `${username}@user.localhost.com`;
+      const fakeEmail = `${username}@example.com`;
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: fakeEmail,
-        password
-      });
-
+      const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
       if (error) return alert("Sai tài khoản hoặc mật khẩu.");
+
       alert("Đăng nhập thành công!");
       window.location.href = "index1.html";
     });
 
-    // --- Tự chuyển hướng nếu đã đăng nhập ---
+    // --- Kiểm tra nếu đã đăng nhập ---
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) window.location.href = "index1.html";
