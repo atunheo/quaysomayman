@@ -1,19 +1,34 @@
 # File: netlify.toml
 
-# 1. Cấu hình chuyển hướng (redirect)
+# =======================================================
+# 1. Cấu hình Redirect (Chuyển hướng)
+# Đặt trang đăng nhập (index1.html) làm trang gốc (/)
+# =======================================================
 [[redirects]]
   from = "/"
-  to = "/index1.html" # Đặt trang đăng nhập (index1.html) làm trang gốc
-  status = 200
+  to = "/index1.html" 
+  status = 200 # Mã status 200 đảm bảo đây là rewrite, không phải chuyển hướng 302/301
 
-# 2. Cấu hình Plugin để thay thế biến môi trường
+# =======================================================
+# 2. Cấu hình Plugin: netlify-plugin-inline-variables
+# Plugin này sẽ chèn biến môi trường một cách an toàn
+# (Không cần lệnh sed -i phức tạp)
+# =======================================================
 [[plugins]]
 package = "netlify-plugin-inline-variables"
 
   [plugins.inputs]
-  # Định nghĩa quy tắc thay thế:
-  # TÌM chuỗi 'FIREBASE_API_KEY_PLACEHOLDER'
-  # THAY THẾ bằng giá trị của biến môi trường 'FIREBASE_API_KEY'
+    # Định nghĩa quy tắc thay thế:
+    # TÌM chuỗi 'FIREBASE_API_KEY_PLACEHOLDER' trong các file HTML
+    # THAY THẾ bằng giá trị của biến môi trường 'FIREBASE_API_KEY'
     replace = [
       { from = "FIREBASE_API_KEY_PLACEHOLDER", to = "env.FIREBASE_API_KEY" }
     ]
+
+# =======================================================
+# 3. Cấu hình Build (Giữ nguyên hoặc xóa lệnh command)
+# Phải đảm bảo Build Command trên Netlify UI đã bị XÓA/LÀM TRỐNG
+# =======================================================
+[build]
+# Bỏ trống phần command.
+# Plugin sẽ tự động chạy trong giai đoạn build.
