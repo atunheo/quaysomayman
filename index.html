@@ -96,7 +96,7 @@
 
       if (!username || !password) return alert("Vui lòng nhập tài khoản và mật khẩu.");
 
-      const fakeEmail = `${username}@example.com`;
+      const fakeEmail = `${username}@gmail.com`;
 
       const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
       if (error) return alert("Sai tài khoản hoặc mật khẩu.");
