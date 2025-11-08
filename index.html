@@ -31,7 +31,6 @@
     <!-- Form đăng ký -->
     <div id="registerForm" class="hidden">
       <h2 class="text-xl font-bold mb-4">Tạo Tài Khoản</h2>
-      <input id="regFullname" placeholder="Họ và tên" class="w-full p-3 mb-3 border border-gray-700 rounded bg-gray-700 text-white" />
       <input id="regUsername" placeholder="Tên tài khoản" type="text" class="w-full p-3 mb-3 border border-gray-700 rounded bg-gray-700 text-white" />
       <input id="regPassword" placeholder="Mật khẩu" type="password" class="w-full p-3 mb-4 border border-gray-700 rounded bg-gray-700 text-white" />
       <button id="registerSubmit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition">Đăng ký</button>
@@ -41,10 +40,10 @@
   <script>
     // --- Supabase config ---
     const SUPABASE_URL = "https://qjxkibwlqblabcquegut.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqeGtpYndscWJsYWJjcXVlZ3V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1ODI2MDksImV4cCI6MjA3ODE1ODYwOX0.Y8M3yq0X98tMDiA6UBP0G4qDoqsqx0ozheaAf-rbMGs"; // ⚠️ Dán key thật vào đây
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqeGtpYndscWJsYWJjcXVlZ3V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1ODI2MDksImV4cCI6MjA3ODE1ODYwOX0.Y8M3yq0X98tMDiA6UBP0G4qDoqsqx0ozheaAf-rbMGs"; // ⚠️ Dán public anon key thật của bạn
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- DOM ---
+    // --- DOM elements ---
     const showLoginTab = document.getElementById('showLoginTab');
     const showRegisterTab = document.getElementById('showRegisterTab');
     const loginForm = document.getElementById('loginForm');
@@ -68,22 +67,23 @@
 
     // --- Đăng ký ---
     registerSubmit.addEventListener('click', async () => {
-      const fullname = document.getElementById('regFullname').value.trim();
       const username = document.getElementById('regUsername').value.trim().toLowerCase();
       const password = document.getElementById('regPassword').value.trim();
 
-      if (!fullname || !username || !password) return alert("Vui lòng nhập đầy đủ thông tin.");
+      if (!username || !password) return alert("Vui lòng nhập tài khoản và mật khẩu.");
 
-      // Email ảo HỢP LỆ (ẩn khỏi người dùng)
-      const fakeEmail = `${username}@gmail.com`;
+      const fakeEmail = `${username}`;
 
-      const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
+      const { data, error } = await supabase.auth.signUp({
+        email: fakeEmail,
+        password
+      });
+
       if (error) return alert("Lỗi đăng ký: " + error.message);
 
-      // Lưu thông tin vào bảng profiles
       const user = data.user;
       if (user) {
-        await supabase.from("profiles").insert([{ id: user.id, fullname, username }]);
+        await supabase.from("profiles").insert([{ id: user.id, username }]);
       }
 
       alert("Tạo tài khoản thành công!");
@@ -96,16 +96,19 @@
 
       if (!username || !password) return alert("Vui lòng nhập tài khoản và mật khẩu.");
 
-      const fakeEmail = `${username}@gmail.com`;
+      const fakeEmail = `${username}`;
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: fakeEmail,
+        password
+      });
+
       if (error) return alert("Sai tài khoản hoặc mật khẩu.");
-
       alert("Đăng nhập thành công!");
       window.location.href = "index1.html";
     });
 
-    // --- Kiểm tra nếu đã đăng nhập ---
+    // --- Kiểm tra đăng nhập sẵn ---
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) window.location.href = "index1.html";
