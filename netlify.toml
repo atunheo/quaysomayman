@@ -15,10 +15,6 @@ command = "sed -i 's|FIREBASE_API_KEY_PLACEHOLDER|'$FIREBASE_API_KEY'|g' index.h
 
   [build.environment]
 
-
-
-  [build.environment]
-
   [build.processing]
 
     [build.processing.css]
