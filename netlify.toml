@@ -1,0 +1,27 @@
+plugins = []
+headers = []
+redirects = []
+
+[functions]
+
+  [functions."*"]
+
+[build]
+publish = "/opt/build/repo"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "sed -i 's|FIREBASE_API_KEY_PLACEHOLDER|'$FIREBASE_API_KEY'|g' index.html index1.html"
+
+  [build.environment]
+
+  [build.processing]
+
+    [build.processing.css]
+
+    [build.processing.html]
+
+    [build.processing.images]
+
+    [build.processing.js]
+
+  [build.services]
