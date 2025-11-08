@@ -1,0 +1,19 @@
+# File: netlify.toml
+
+# 1. Cấu hình chuyển hướng (redirect)
+[[redirects]]
+  from = "/"
+  to = "/index1.html" # Đặt trang đăng nhập (index1.html) làm trang gốc
+  status = 200
+
+# 2. Cấu hình Plugin để thay thế biến môi trường
+[[plugins]]
+package = "netlify-plugin-inline-variables"
+
+  [plugins.inputs]
+  # Định nghĩa quy tắc thay thế:
+  # TÌM chuỗi 'FIREBASE_API_KEY_PLACEHOLDER'
+  # THAY THẾ bằng giá trị của biến môi trường 'FIREBASE_API_KEY'
+    replace = [
+      { from = "FIREBASE_API_KEY_PLACEHOLDER", to = "env.FIREBASE_API_KEY" }
+    ]
